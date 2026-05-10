@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Rocket, CalendarDays, Sparkles, PenLine, Zap, HandCoins, ChartNoAxesCombined, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getRandomQuote } from "@/lib/quotes";
+import { useMemo } from "react";
+import { UserAvatar } from "@/components/user-avatar";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: Rocket },
@@ -18,6 +21,8 @@ const nav = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Memoize quote so it doesn't change on every render
+  const quote = useMemo(() => getRandomQuote(), []);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,#ffe4ef_0%,#fff9fc_45%,#fff7ef_100%)] text-[#2a1a24]">
@@ -27,7 +32,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <p className="text-xs uppercase tracking-[0.2em] text-[#c86a93]">Viral Boss Planner</p>
             <h1 className="text-xl font-semibold">Social Media Automation Super Poster</h1>
           </div>
-          <span className="rounded-full bg-[#1b1721] px-3 py-1 text-xs font-semibold text-[#ffd27f]">Launch-Ready MVP</span>
+          <div className="flex items-center gap-4">
+            <span className="rounded-full bg-[#1b1721] px-3 py-1 text-xs font-semibold text-[#ffd27f]">Launch-Ready MVP</span>
+            <UserAvatar />
+          </div>
+        </div>
+        {/* Quote Banner */}
+        <div className="mx-auto mt-2 w-full max-w-7xl px-4 sm:px-6">
+          <div className="rounded-2xl bg-gradient-to-r from-[#ffe4ef] to-[#fff7ef] px-6 py-3 text-center text-base font-medium text-[#b95e86] shadow-sm border border-[#f8cfe0]">
+            <span className="italic">“{quote.text}”</span>
+            {quote.author && <span className="ml-2 text-xs text-[#c86a93]">— {quote.author}</span>}
+          </div>
         </div>
       </header>
 

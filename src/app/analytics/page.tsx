@@ -1,57 +1,57 @@
 "use client";
-
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useUser } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { DEMO_POSTS } from "@/lib/data";
-import { formatCurrency } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
+
+import { useBusiness } from "@/lib/business-context";
 
 export default function AnalyticsPage() {
-  const [bestPlatform, setBestPlatform] = useState("instagram");
-  const [revenueGoal, setRevenueGoal] = useState(1200);
-  const [leads, setLeads] = useState(27);
-  const [orders, setOrders] = useState(8);
-  const [streak, setStreak] = useState(6);
+  const { user, loading: authLoading } = useUser();
+  const { selectedBusinessId } = useBusiness();
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const stats = useMemo(() => {
-    const scheduled = DEMO_POSTS.filter((p) => p.status === "scheduled").length;
-    const published = DEMO_POSTS.filter((p) => p.status === "posted").length;
-    return { scheduled, published };
-  }, []);
+  useEffect(() => {
+    if (!authLoading && !user) window.location.href = "/login";
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    if (!user || !selectedBusinessId) return;
+    setLoading(true);
+    supabase
+      .from("analytics_events")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("business_id", selectedBusinessId)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) setError(error.message);
+        setEvents(data || []);
+        setLoading(false);
+      });
+  }, [user, selectedBusinessId]);
+
+  if (authLoading || !user) return <div className="text-center py-12 text-pink-400">Loading...</div>;
+  if (!selectedBusinessId) return <div className="text-center py-12 text-pink-400">Select a business to view analytics.</div>;
 
   return (
     <section className="grid gap-5">
+      <h1 className="text-3xl font-bold mb-6 text-center text-pink-500">Analytics</h1>
+      {error && <div className="text-center text-pink-500 mb-4">{error}</div>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardTitle>{stats.scheduled}</CardTitle>
-          <CardDescription>Posts scheduled</CardDescription>
-        </Card>
-        <Card>
-          <CardTitle>{stats.published}</CardTitle>
-          <CardDescription>Posts published</CardDescription>
-        </Card>
-        <Card>
-          <CardTitle>{formatCurrency(revenueGoal)}</CardTitle>
-          <CardDescription>Revenue goal</CardDescription>
-        </Card>
+        {loading && <div className="flex justify-center py-8"><Spinner /></div>}
+        {!loading && events.length === 0 && <div className="text-center text-gray-400">No analytics events yet.</div>}
+        {events.map(event => (
+          <Card key={event.id}>
+            <CardTitle>{event.event}</CardTitle>
+            <CardDescription>Value: {event.value}</CardDescription>
+            <CardDescription>Date: {new Date(event.created_at).toLocaleString()}</CardDescription>
+          </Card>
+        ))}
       </div>
-
-      <Card>
-        <CardTitle>Manual Performance Tracker</CardTitle>
-        <CardDescription>Update performance numbers quickly as leads and orders come in.</CardDescription>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Input value={bestPlatform} onChange={(e) => setBestPlatform(e.target.value)} placeholder="Best-performing platform" />
-          <Input type="number" value={revenueGoal} onChange={(e) => setRevenueGoal(Number(e.target.value) || 0)} placeholder="Revenue goal" />
-          <Input type="number" value={leads} onChange={(e) => setLeads(Number(e.target.value) || 0)} placeholder="Leads" />
-          <Input type="number" value={orders} onChange={(e) => setOrders(Number(e.target.value) || 0)} placeholder="Orders" />
-          <Input type="number" value={streak} onChange={(e) => setStreak(Number(e.target.value) || 0)} placeholder="Content streak" />
-        </div>
-
-        <div className="mt-4 rounded-2xl bg-[#1b1721] p-4 text-sm text-[#ffd27f]">
-          Best platform: <strong className="uppercase">{bestPlatform}</strong> | Leads: {leads} | Orders: {orders} | Streak: {streak} days
-        </div>
-      </Card>
     </section>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useUser } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +28,11 @@ const contentTypes = [
   "Motivational aggressive but cute",
 ];
 
-export default function GeneratorPage() {
+
+  const { user, loading: authLoading } = useUser();
+  const router = useRouter();
+  // TODO: Get selected business from global state or context
+  const selectedBusinessId = null; // Replace with actual selected business logic
   const [platform, setPlatform] = useState("instagram");
   const [category, setCategory] = useState(BUSINESS_CATEGORIES[0]);
   const [goal, setGoal] = useState("Get DMs tonight");
@@ -33,8 +40,18 @@ export default function GeneratorPage() {
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState("Demo suggestion loaded from templates.");
+  const [saveStatus, setSaveStatus] = useState("");
 
   const fallback = useMemo(() => CONTENT_TEMPLATES.find((tpl) => tpl.category.includes(category.split(" ")[0])) ?? CONTENT_TEMPLATES[0], [category]);
+
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    router.push("/login");
+    return null;
+  }
+  if (!selectedBusinessId) {
+    return <div className="text-center py-12 text-pink-400">Select a business to generate content.</div>;
+  }
 
   async function handleGenerate() {
     setLoading(true);
@@ -54,6 +71,56 @@ export default function GeneratorPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSaveDraft() {
+    setSaveStatus("");
+    if (!user || !selectedBusinessId || !output) return;
+    setLoading(true);
+    // Save as draft post
+    const { data, error } = await supabase.from("posts").insert([
+      {
+        user_id: user.id,
+        business_id: selectedBusinessId,
+        content: output,
+        platform,
+        status: "draft",
+      },
+    ]).select();
+    if (error) setSaveStatus(error.message);
+    else setSaveStatus("Draft saved!");
+    setLoading(false);
+  }
+
+  async function handleSendToApproval() {
+    setSaveStatus("");
+    if (!user || !selectedBusinessId || !output) return;
+    setLoading(true);
+    // Save post and add to approval queue
+    const { data: postData, error: postError } = await supabase.from("posts").insert([
+      {
+        user_id: user.id,
+        business_id: selectedBusinessId,
+        content: output,
+        platform,
+        status: "generated",
+      },
+    ]).select();
+    if (postError || !postData?.[0]) {
+      setSaveStatus(postError?.message || "Failed to save post");
+      setLoading(false);
+      return;
+    }
+    const post_id = postData[0].id;
+    const { error: queueError } = await supabase.from("approval_queue").insert([
+      {
+        post_id,
+        status: "generated",
+      },
+    ]);
+    if (queueError) setSaveStatus(queueError.message);
+    else setSaveStatus("Sent to approval queue!");
+    setLoading(false);
   }
 
   return (
@@ -99,6 +166,11 @@ export default function GeneratorPage() {
         <CardTitle>Generated Output</CardTitle>
         <CardDescription>{meta}</CardDescription>
         <Textarea className="mt-4 min-h-[320px]" value={output} onChange={(e) => setOutput(e.target.value)} />
+        <div className="flex gap-2 mt-4">
+          <Button onClick={handleSaveDraft} disabled={loading || !output}>Save as Draft</Button>
+          <Button onClick={handleSendToApproval} disabled={loading || !output}>Send to Approval Queue</Button>
+        </div>
+        {saveStatus && <div className="mt-2 text-center text-pink-500">{saveStatus}</div>}
       </Card>
     </section>
   );

@@ -1,14 +1,28 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Sparkles, Target, Wallet } from "lucide-react";
+import { ArrowRight, CalendarDays, Sparkles, Target, Wallet, Lightbulb } from "lucide-react";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Countdown } from "@/components/countdown";
 import { StatusBadge } from "@/components/status-badge";
 import { BUSINESSES, DEMO_POSTS } from "@/lib/data";
+import { getRandomBusinessIdea } from "@/lib/ai-ideas";
+import { useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useBusiness } from "@/lib/business-context";
 import { formatCurrency } from "@/lib/utils";
 
-export default function Home() {
   const today = DEMO_POSTS.filter((post) => post.scheduledAt).slice(0, 4);
+  const idea = useMemo(() => getRandomBusinessIdea(), []);
+  const { selectedBusinessId } = useBusiness();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!selectedBusinessId) {
+      router.push("/onboarding");
+    }
+  }, [selectedBusinessId, router]);
+
+  if (!selectedBusinessId) return null;
 
   return (
     <section className="grid gap-5">
@@ -58,6 +72,17 @@ export default function Home() {
         </Card>
 
         <Countdown hours={5} />
+      </div>
+
+      {/* AI Business/Contest Idea Suggestion */}
+      <div className="mx-auto w-full max-w-3xl">
+        <Card className="bg-[#f4e9ff] border-[#e0d4fa] flex flex-row items-center gap-4 p-5 my-2">
+          <Lightbulb size={28} className="text-[#b095f7]" />
+          <div>
+            <CardTitle>AI Business-Building Idea</CardTitle>
+            <CardDescription className="mt-1 text-[#6743b3] font-medium">{idea}</CardDescription>
+          </div>
+        </Card>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">

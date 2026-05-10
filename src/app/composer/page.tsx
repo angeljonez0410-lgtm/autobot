@@ -9,6 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { BUSINESSES } from "@/lib/data";
 
 export default function ComposerPage() {
+  // Keyboard shortcut: N for new post draft
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if ((e.key === "n" || e.key === "N") && (e.ctrlKey || e.metaKey)) {
+        const textarea = document.querySelector<HTMLTextAreaElement>("textarea[placeholder='Write your caption']");
+        if (textarea) textarea.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
   const [form, setForm] = useState({
     businessId: BUSINESSES[0].id,
     platform: "instagram",
@@ -22,6 +33,7 @@ export default function ComposerPage() {
   });
   const [message, setMessage] = useState("Ready to build your post.");
   const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const captionPrompt = useMemo(() => `${form.caption}\n\nImprove this caption for conversions in a confident mompreneur tone.`, [form.caption]);
 
@@ -57,6 +69,23 @@ export default function ComposerPage() {
   }
 
   async function scheduleWithBuffer() {
+    setFormError("");
+    if (!form.businessId) {
+      setFormError("Business is required.");
+      return;
+    }
+    if (!form.platform) {
+      setFormError("Platform is required.");
+      return;
+    }
+    if (!form.caption.trim()) {
+      setFormError("Caption is required.");
+      return;
+    }
+    if (!form.scheduledAt) {
+      setFormError("Scheduled date/time is required.");
+      return;
+    }
     setBusy(true);
     try {
       const response = await fetch("/api/buffer/schedule", {
@@ -91,13 +120,17 @@ export default function ComposerPage() {
         <CardDescription>Create, improve, and schedule cross-platform content.</CardDescription>
 
         <div className="mt-4 grid gap-3">
+          {formError && <div className="text-pink-500 text-sm text-center">{formError}</div>}
           <Select value={form.businessId} onChange={(e) => update("businessId", e.target.value)}>
+            {/* Helper text for business selection */}
+            <option value="" disabled>Select a business</option>
             {BUSINESSES.map((biz) => (
               <option key={biz.id} value={biz.id}>
                 {biz.name}
               </option>
             ))}
           </Select>
+          <div className="text-xs text-[#a26a88]">Choose which business this post is for.</div>
 
           <Select value={form.platform} onChange={(e) => update("platform", e.target.value)}>
             <option value="tiktok">TikTok</option>
@@ -106,12 +139,13 @@ export default function ComposerPage() {
             <option value="pinterest">Pinterest</option>
             <option value="youtube_shorts">YouTube Shorts</option>
           </Select>
+          <div className="text-xs text-[#a26a88]">Select the platform for this post.</div>
 
-          <Textarea value={form.caption} onChange={(e) => update("caption", e.target.value)} placeholder="Write your caption" />
-          <Input value={form.imageUrl} onChange={(e) => update("imageUrl", e.target.value)} placeholder="Image URL" />
-          <Input value={form.hashtags} onChange={(e) => update("hashtags", e.target.value)} placeholder="#hashtags" />
-          <Input value={form.cta} onChange={(e) => update("cta", e.target.value)} placeholder="CTA" />
-          <Input type="datetime-local" value={form.scheduledAt} onChange={(e) => update("scheduledAt", e.target.value)} />
+          <Textarea value={form.caption} onChange={(e) => update("caption", e.target.value)} placeholder="Write your caption" helperText="Write a catchy, high-converting caption." />
+          <Input value={form.imageUrl} onChange={(e) => update("imageUrl", e.target.value)} placeholder="Image URL" helperText="Paste a link to your post image (optional)." />
+          <Input value={form.hashtags} onChange={(e) => update("hashtags", e.target.value)} placeholder="#hashtags" helperText="Add hashtags to boost reach. Separate with spaces." />
+          <Input value={form.cta} onChange={(e) => update("cta", e.target.value)} placeholder="CTA" helperText="Call to action (e.g. DM READY, Link in bio)." />
+          <Input type="datetime-local" value={form.scheduledAt} onChange={(e) => update("scheduledAt", e.target.value)} helperText="When should this post go live?" />
 
           <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
             <option value="idea">Idea</option>
@@ -120,8 +154,9 @@ export default function ComposerPage() {
             <option value="scheduled">Scheduled</option>
             <option value="posted">Posted</option>
           </Select>
+          <div className="text-xs text-[#a26a88]">Track your post's progress from idea to posted.</div>
 
-          <Input value={form.profileId} onChange={(e) => update("profileId", e.target.value)} placeholder="Buffer profile ID (optional)" />
+          <Input value={form.profileId} onChange={(e) => update("profileId", e.target.value)} placeholder="Buffer profile ID (optional)" helperText="Paste your Buffer profile ID if scheduling." />
         </div>
       </Card>
 

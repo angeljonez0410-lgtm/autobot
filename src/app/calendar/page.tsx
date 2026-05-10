@@ -1,31 +1,68 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useUser } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
-import { DEMO_POSTS, BUSINESSES } from "@/lib/data";
+import { BUSINESSES } from "@/lib/data";
+import { Spinner } from "@/components/ui/spinner";
+import { useBusiness } from "@/lib/business-context";
 import { PostStatus } from "@/lib/types";
 import { StatusBadge } from "@/components/status-badge";
 
 const statuses: PostStatus[] = ["idea", "draft", "ready", "scheduled", "posted"];
 
 export default function CalendarPage() {
+
+  const { user, loading: authLoading } = useUser();
+  const router = useRouter();
+  const { selectedBusinessId } = useBusiness();
+  const [businessFilter, setBusinessFilter] = useState<string>(selectedBusinessId || "all");
   const [platformFilter, setPlatformFilter] = useState("all");
-  const [businessFilter, setBusinessFilter] = useState("all");
-  const [board, setBoard] = useState(DEMO_POSTS);
+  const [posts, setPosts] = useState<any[]>([]);
   const [view, setView] = useState<"weekly" | "monthly">("weekly");
+  const [loading, setLoading] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) router.push("/login");
+  }, [user, authLoading, router]);
+
+  // Sync businessFilter with selectedBusinessId
+  useEffect(() => {
+    setBusinessFilter(selectedBusinessId || "all");
+  }, [selectedBusinessId]);
+
+  // Fetch posts from Supabase
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    let query = supabase.from("posts").select("*").eq("user_id", user.id);
+    if (businessFilter !== "all") query = query.eq("business_id", businessFilter);
+    query.order("created_at", { ascending: false }).then(({ data }) => {
+      setPosts(data || []);
+      setLoading(false);
+    });
+  }, [user, businessFilter]);
 
   const filtered = useMemo(() => {
-    return board.filter((post) => {
+    return posts.filter((post) => {
       if (platformFilter !== "all" && post.platform !== platformFilter) return false;
-      if (businessFilter !== "all" && post.businessId !== businessFilter) return false;
+      if (businessFilter !== "all" && post.business_id !== businessFilter) return false;
       return true;
     });
-  }, [board, platformFilter, businessFilter]);
+  }, [posts, platformFilter, businessFilter]);
 
-  function onDrop(postId: string, status: PostStatus) {
-    setBoard((prev) => prev.map((p) => (p.id === postId ? { ...p, status } : p)));
+  async function onDrop(postId: string, status: PostStatus) {
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status } : p)));
+    await supabase.from("posts").update({ status }).eq("id", postId);
   }
+
+  if (authLoading || !user) return <div className="text-center py-12 text-pink-400">Loading...</div>;
+
+  if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
 
   return (
     <section className="grid gap-5">
