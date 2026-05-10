@@ -8,6 +8,8 @@ interface BusinessContextType {
 
 const BusinessContext = createContext<BusinessContextType | undefined>(undefined);
 
+
+export function BusinessProvider({ children }: { children: ReactNode }) {
   const [selectedBusinessId, setSelectedBusinessIdState] = useState<string | null>(null);
 
   // Persist to localStorage
