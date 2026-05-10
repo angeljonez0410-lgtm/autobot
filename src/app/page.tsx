@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Sparkles, Target, Wallet, Lightbulb } from "lucide-react";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -11,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useBusiness } from "@/lib/business-context";
 import { formatCurrency } from "@/lib/utils";
 
+export default function HomePage() {
   const today = DEMO_POSTS.filter((post) => post.scheduledAt).slice(0, 4);
   const idea = useMemo(() => getRandomBusinessIdea(), []);
   const { selectedBusinessId } = useBusiness();
