@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -28,76 +28,53 @@ const contentTypes = [
   "Motivational aggressive but cute",
 ];
 
-
+export default function GeneratorPage() {
   const { user, loading: authLoading } = useUser();
+  const router = useRouter();
+  // TODO: Get selected business from global state or context
+  const selectedBusinessId = null; // Replace with actual selected business logic
+  const [platform, setPlatform] = useState("instagram");
+  const [category, setCategory] = useState(BUSINESS_CATEGORIES[0]);
+  const [goal, setGoal] = useState("Get DMs tonight");
+  const [contentType, setContentType] = useState(contentTypes[0]);
+  const [output, setOutput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [meta, setMeta] = useState("Demo suggestion loaded from templates.");
+  const [saveStatus, setSaveStatus] = useState("");
 
-  "use client";
+  const fallback = useMemo(() => CONTENT_TEMPLATES.find((tpl) => tpl.category.includes(category.split(" ")[0])) ?? CONTENT_TEMPLATES[0], [category]);
 
-  import { useMemo, useState, useEffect } from "react";
-  import { useUser } from "@/lib/auth";
-  import { useRouter } from "next/navigation";
-  import { supabase } from "@/lib/supabase";
-  import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-  import { Button } from "@/components/ui/button";
-  import { Input } from "@/components/ui/input";
-  import { Select } from "@/components/ui/select";
-  import { Textarea } from "@/components/ui/textarea";
-  import { BUSINESS_CATEGORIES, BRAND_VOICE, CONTENT_TEMPLATES } from "@/lib/data";
-
-  const contentTypes = [
-    "TikTok caption",
-    "Instagram caption",
-    "Facebook post",
-    "Pinterest description",
-    "YouTube Shorts title",
-    "Hashtags",
-    "Hooks",
-    "Product promo post",
-    "Story post",
-    "Email promo copy",
-    "Launch post",
-    "UGC-style script",
-    "Mompreneur money content",
-    "Motivational aggressive but cute",
-  ];
-
-  export default function GeneratorPage() {
-    const { user, loading: authLoading } = useUser();
-    const router = useRouter();
-    // TODO: Get selected business from global state or context
-    const selectedBusinessId = null; // Replace with actual selected business logic
-    const [platform, setPlatform] = useState("instagram");
-    const [category, setCategory] = useState(BUSINESS_CATEGORIES[0]);
-    const [goal, setGoal] = useState("Get DMs tonight");
-    const [contentType, setContentType] = useState(contentTypes[0]);
-    const [output, setOutput] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [meta, setMeta] = useState("Demo suggestion loaded from templates.");
-    const [saveStatus, setSaveStatus] = useState("");
-
-    const fallback = useMemo(() => CONTENT_TEMPLATES.find((tpl) => tpl.category.includes(category.split(" ")[0])) ?? CONTENT_TEMPLATES[0], [category]);
-
-    // Redirect to login if not authenticated (client-side)
-    useEffect(() => {
-      if (!authLoading && !user) {
-        router.push("/login");
-      }
-    }, [authLoading, user, router]);
-
+  // Redirect to login if not authenticated (client-side)
+  useEffect(() => {
     if (!authLoading && !user) {
-      return null; // Show nothing while redirecting
+      router.push("/login");
     }
-    if (!selectedBusinessId) {
-      return (
-        <div className="text-center py-12 text-pink-400">
-          Select a business to generate content.
-        </div>
-      );
-    }
+  }, [authLoading, user, router]);
+
+  if (!authLoading && !user) {
+    return null; // Show nothing while redirecting
+  }
+  if (!selectedBusinessId) {
+    return (
+      <div className="text-center py-12 text-pink-400">
+        Select a business to generate content.
+      </div>
+    );
+  }
+
+  async function handleSaveDraft() {
+    setSaveStatus("");
+    if (!user || !selectedBusinessId || !output) return;
+    setLoading(true);
+    const { error } = await supabase.from("posts").insert([
+      {
+        user_id: user.id,
+        business_id: selectedBusinessId,
+        content: output,
         platform,
         status: "draft",
       },
-    ]).select();
+    ]);
     if (error) setSaveStatus(error.message);
     else setSaveStatus("Draft saved!");
     setLoading(false);
