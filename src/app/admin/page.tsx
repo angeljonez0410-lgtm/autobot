@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/auth";
+import type { User } from "@supabase/auth-js";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function AdminOverridePage() {
-  const { user, loading: authLoading } = useUser();
+  const { user, loading: authLoading } = useUser() as { user: User | null, loading: boolean };
   const [overrides, setOverrides] = useState<any[]>([]);
   const [targetEmail, setTargetEmail] = useState("");
   const [plan, setPlan] = useState("");
