@@ -14,33 +14,7 @@ type Health = {
   aiConfigured: boolean;
 };
 
-  const { user, loading: authLoading } = useUser();
-  const [health, setHealth] = useState<Health | null>(null);
-  const [profiles, setProfiles] = useState<Array<{ id: string; service: string; formatted_username?: string }>>([]);
-  const [message, setMessage] = useState("No checks run yet.");
-  const [brandVoice, setBrandVoice] = useState(BRAND_VOICE);
-  const [hashtags, setHashtags] = useState("#Mompreneur #MakeMoneyTonight #SmallBusiness");
-  const [cta, setCta] = useState("DM READY to order");
 
-  useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
-    fetch("/api/health")
-      .then((res) => res.json())
-      .then((data) => setHealth(data))
-      .catch(() => setMessage("Failed to check environment health."));
-  }, [user, authLoading]);
-
-  async function fetchProfiles() {
-    try {
-      const response = await fetch("/api/buffer/profiles");
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Unable to fetch profiles");
-      setProfiles(data.profiles ?? []);
-      setMessage(data.demoMode ? "Buffer not connected: demo profiles shown." : "Connected to live Buffer profiles.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Profile fetch failed");
-    }
-  }
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useUser();
