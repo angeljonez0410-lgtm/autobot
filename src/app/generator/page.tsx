@@ -44,13 +44,20 @@ const contentTypes = [
 
   const fallback = useMemo(() => CONTENT_TEMPLATES.find((tpl) => tpl.category.includes(category.split(" ")[0])) ?? CONTENT_TEMPLATES[0], [category]);
 
-  // Redirect to login if not authenticated
+
+  // Early returns for auth and business selection
   if (!authLoading && !user) {
-    router.push("/login");
+    if (typeof window !== "undefined") {
+      router.push("/login");
+    }
     return null;
   }
   if (!selectedBusinessId) {
-    return <div className="text-center py-12 text-pink-400">Select a business to generate content.</div>;
+    return (
+      <div className="text-center py-12 text-pink-400">
+        Select a business to generate content.
+      </div>
+    );
   }
 
   async function handleGenerate() {
