@@ -24,8 +24,13 @@ export default function AdminOverridePage() {
   }, [user, authLoading]);
 
   useEffect(() => {
-    if (!user || !isAdmin) return;
+    if (!user || !isAdmin || !supabase) return;
     setLoading(true);
+    if (!supabase) {
+      setError("Supabase client not configured.");
+      setLoading(false);
+      return;
+    }
     supabase
       .from("admin_overrides")
       .select("*, profiles: user_id (email)")
@@ -42,6 +47,11 @@ export default function AdminOverridePage() {
     if (!user || !isAdmin || !targetEmail || !plan) return;
     setLoading(true);
     // Find user by email
+    if (!supabase) {
+      setError("Supabase client not configured.");
+      setLoading(false);
+      return;
+    }
     const { data: users, error: userError } = await supabase.from("profiles").select("id").eq("email", targetEmail);
     if (userError || !users?.[0]) {
       setError("User not found");
@@ -61,6 +71,11 @@ export default function AdminOverridePage() {
     setPlan("");
     setExpiresAt("");
     // Refresh
+    if (!supabase) {
+      setError("Supabase client not configured.");
+      setLoading(false);
+      return;
+    }
     const { data } = await supabase
       .from("admin_overrides")
       .select("*, profiles: user_id (email)")
@@ -71,6 +86,11 @@ export default function AdminOverridePage() {
 
   async function handleDelete(id: string) {
     setLoading(true);
+    if (!supabase) {
+      setError("Supabase client not configured.");
+      setLoading(false);
+      return;
+    }
     await supabase.from("admin_overrides").delete().eq("id", id);
     setOverrides(overrides => overrides.filter(o => o.id !== id));
     setLoading(false);
