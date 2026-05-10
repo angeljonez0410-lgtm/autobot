@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { ProductForm, ProductFormData } from "@/components/product-form";
 import { supabase } from "@/lib/supabase";
