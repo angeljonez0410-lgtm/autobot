@@ -1,3 +1,4 @@
+"use client";
 import { useToast } from "@/components/toast-provider";
 import { useEffect } from "react";
 
