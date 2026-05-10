@@ -45,12 +45,15 @@ const contentTypes = [
   const fallback = useMemo(() => CONTENT_TEMPLATES.find((tpl) => tpl.category.includes(category.split(" ")[0])) ?? CONTENT_TEMPLATES[0], [category]);
 
 
-  // Early returns for auth and business selection
-  if (!authLoading && !user) {
-    if (typeof window !== "undefined") {
+  // Redirect to login if not authenticated (client-side)
+  useEffect(() => {
+    if (!authLoading && !user) {
       router.push("/login");
     }
-    return null;
+  }, [authLoading, user, router]);
+
+  if (!authLoading && !user) {
+    return null; // Show nothing while redirecting
   }
   if (!selectedBusinessId) {
     return (
