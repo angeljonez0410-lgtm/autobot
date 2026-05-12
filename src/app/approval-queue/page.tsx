@@ -50,7 +50,7 @@ export default function ApprovalQueuePage() {
         .eq("user_id", user.id)
         .eq("business_id", selectedBusinessId)
         .order("created_at", { ascending: false });
-      setQueue(data || []);
+      setQueue((data as ApprovalItem[]) || []);
       setLoading(false);
     })();
   }, [user, selectedBusinessId]);
