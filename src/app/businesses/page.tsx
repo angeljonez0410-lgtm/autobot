@@ -11,8 +11,6 @@ type Business = BusinessFormData & { id: string; archived?: boolean };
 
 export default function BusinessesPage() {
   // Keyboard shortcut: N for new business
-  const [editing, setEditing] = useState<Business | null>(null);
-  const [showForm, setShowForm] = useState(false);
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if ((e.key === "n" || e.key === "N") && (e.ctrlKey || e.metaKey)) {
@@ -26,8 +24,6 @@ export default function BusinessesPage() {
   const { user, loading: authLoading } = useUser();
   const router = useRouter();
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [editing, setEditing] = useState<Business | null>(null);
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const { selectedBusinessId, setSelectedBusinessId } = useBusiness();
 
