@@ -10,6 +10,7 @@ import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 export default function AdminOverridePage() {
   const { user, loading: authLoading } = useUser() as { user: User | null, loading: boolean };
   type AdminOverride = {
+    id: string;
     user_id: string;
     plan: string;
     expires_at: string | null;
