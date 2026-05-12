@@ -39,6 +39,11 @@ export default function ApprovalQueuePage() {
     if (!user || !selectedBusinessId) return;
     (async () => {
       setLoading(true);
+      if (!supabase) {
+        setQueue([]);
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from("approval_queue")
         .select("*, post:posts(*)")
