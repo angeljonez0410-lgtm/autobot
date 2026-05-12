@@ -4,14 +4,4 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
-  "cron": [
-    {
-      "path": "/api/jobs/publish",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/jobs/health",
-      "schedule": "0 3 * * *"
-    }
-  ]
 }
