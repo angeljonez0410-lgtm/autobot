@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/auth";
+import type { User } from "@supabase/auth-js";
 import { supabase } from "@/lib/supabase";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -8,9 +9,15 @@ import { Spinner } from "@/components/ui/spinner";
 import { useBusiness } from "@/lib/business-context";
 
 export default function AnalyticsPage() {
-  const { user, loading: authLoading } = useUser();
+  const { user, loading: authLoading } = useUser() as { user: User | null, loading: boolean };
   const { selectedBusinessId } = useBusiness();
-  const [events, setEvents] = useState<any[]>([]);
+  type AnalyticsEvent = {
+    id: string;
+    event: string;
+    value: number;
+    created_at: string;
+  };
+  const [events, setEvents] = useState<AnalyticsEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -20,18 +27,23 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (!user || !selectedBusinessId) return;
-    setLoading(true);
-    supabase
-      .from("analytics_events")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("business_id", selectedBusinessId)
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message);
-        setEvents(data || []);
+    (async () => {
+      setLoading(true);
+      if (!supabase) {
+        setError("Supabase client not configured.");
         setLoading(false);
-      });
+        return;
+      }
+      const { data, error } = await supabase
+        .from("analytics_events")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("business_id", selectedBusinessId)
+        .order("created_at", { ascending: false });
+      if (error) setError(error.message);
+      setEvents(data || []);
+      setLoading(false);
+    })();
   }, [user, selectedBusinessId]);
 
   if (authLoading || !user) return <div className="text-center py-12 text-pink-400">Loading...</div>;

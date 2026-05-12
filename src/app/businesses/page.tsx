@@ -1,3 +1,4 @@
+"use client";
 
 import { useEffect, useState } from "react";
 import { useBusiness } from "@/lib/business-context";
@@ -10,6 +11,8 @@ type Business = BusinessFormData & { id: string; archived?: boolean };
 
 export default function BusinessesPage() {
   // Keyboard shortcut: N for new business
+  const [editing, setEditing] = useState<Business | null>(null);
+  const [showForm, setShowForm] = useState(false);
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if ((e.key === "n" || e.key === "N") && (e.ctrlKey || e.metaKey)) {

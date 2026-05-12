@@ -6,12 +6,18 @@ import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useBusiness } from "@/lib/business-context";
 
-// TODO: Replace with global selected business context
-  const { selectedBusinessId } = useBusiness();
+
+
 
 export default function BufferSettingsPage() {
+  const { selectedBusinessId } = useBusiness();
   const { user, loading: authLoading } = useUser();
-  const [profiles, setProfiles] = useState<any[]>([]);
+  type BufferProfile = {
+    id: string;
+    formatted_username?: string;
+    service?: string;
+  };
+  const [profiles, setProfiles] = useState<BufferProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [demoMode, setDemoMode] = useState(false);
@@ -22,18 +28,19 @@ export default function BufferSettingsPage() {
 
   useEffect(() => {
     if (!user || !selectedBusinessId) return;
-    setLoading(true);
-    fetch("/api/buffer/profiles")
-      .then(res => res.json())
-      .then(data => {
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/buffer/profiles");
+        const data = await res.json();
         setProfiles(data.profiles || []);
         setDemoMode(!!data.demoMode);
-        setLoading(false);
-      })
-      .catch(e => {
+      } catch (e: any) {
         setError(e.message);
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, [user, selectedBusinessId]);
 
   if (authLoading || !user) return <div className="text-center py-12 text-pink-400">Loading...</div>;

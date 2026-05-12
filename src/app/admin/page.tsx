@@ -9,7 +9,14 @@ import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function AdminOverridePage() {
   const { user, loading: authLoading } = useUser() as { user: User | null, loading: boolean };
-  const [overrides, setOverrides] = useState<any[]>([]);
+  type AdminOverride = {
+    user_id: string;
+    plan: string;
+    expires_at: string | null;
+    created_at: string;
+    profiles?: { email: string };
+  };
+  const [overrides, setOverrides] = useState<AdminOverride[]>([]);
   const [targetEmail, setTargetEmail] = useState("");
   const [plan, setPlan] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
@@ -25,21 +32,21 @@ export default function AdminOverridePage() {
 
   useEffect(() => {
     if (!user || !isAdmin || !supabase) return;
-    setLoading(true);
-    if (!supabase) {
-      setError("Supabase client not configured.");
-      setLoading(false);
-      return;
-    }
-    supabase
-      .from("admin_overrides")
-      .select("*, profiles: user_id (email)")
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message);
-        setOverrides(data || []);
+    (async () => {
+      setLoading(true);
+      if (!supabase) {
+        setError("Supabase client not configured.");
         setLoading(false);
-      });
+        return;
+      }
+      const { data, error } = await supabase
+        .from("admin_overrides")
+        .select("*, profiles: user_id (email)")
+        .order("created_at", { ascending: false });
+      if (error) setError(error.message);
+      setOverrides(data || []);
+      setLoading(false);
+    })();
   }, [user, isAdmin]);
 
   async function handleAddOverride() {

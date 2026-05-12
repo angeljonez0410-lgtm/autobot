@@ -22,7 +22,14 @@ export default function AutomationPage() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
   const { user, loading: authLoading } = useUser();
-  const [rules, setRules] = useState<any[]>([]);
+  type AutomationRule = {
+    id: string;
+    user_id: string;
+    business_id: string;
+    description: string;
+    created_at: string;
+  };
+  const [rules, setRules] = useState<AutomationRule[]>([]);
   const [newRule, setNewRule] = useState("");
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,18 +44,18 @@ export default function AutomationPage() {
   // Fetch automation rules for user & business
   useEffect(() => {
     if (!user || !selectedBusinessId) return;
-    setLoading(true);
-    supabase
-      .from("automation_rules")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("business_id", selectedBusinessId)
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message);
-        setRules(data || []);
-        setLoading(false);
-      });
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("automation_rules")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("business_id", selectedBusinessId)
+        .order("created_at", { ascending: false });
+      if (error) setError(error.message);
+      setRules(data || []);
+      setLoading(false);
+    })();
   }, [user, selectedBusinessId]);
 
   async function handleAddRule() {

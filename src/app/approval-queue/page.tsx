@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/lib/auth";
@@ -36,17 +37,17 @@ export default function ApprovalQueuePage() {
   // Fetch approval queue for selected business
   useEffect(() => {
     if (!user || !selectedBusinessId) return;
-    setLoading(true);
-    supabase
-      .from("approval_queue")
-      .select("*, post:posts(*)")
-      .eq("user_id", user.id)
-      .eq("business_id", selectedBusinessId)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setQueue(data || []);
-        setLoading(false);
-      });
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("approval_queue")
+        .select("*, post:posts(*)")
+        .eq("user_id", user.id)
+        .eq("business_id", selectedBusinessId)
+        .order("created_at", { ascending: false });
+      setQueue(data || []);
+      setLoading(false);
+    })();
   }, [user, selectedBusinessId]);
 
   async function updateStatus(id: string, status: string) {

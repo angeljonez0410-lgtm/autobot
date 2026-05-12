@@ -20,3 +20,8 @@ export function formatDateTime(value: string) {
 export function getHoursBetween(now: Date, target: Date) {
   return Math.max(0, Math.floor((target.getTime() - now.getTime()) / (1000 * 60 * 60)));
 }
+
+// Simple sum function for testing
+export function sum(a: number, b: number): number {
+  return a + b;
+}
