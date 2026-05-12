@@ -8,6 +8,10 @@
     {
       "path": "/api/jobs/publish",
       "schedule": "0 * * * *" // every hour
+    },
+    {
+      "path": "/api/jobs/health",
+      "schedule": "0 3 * * *" // every day at 3am
     }
   ]
 }
